@@ -17,6 +17,9 @@ func newRouter() *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/users", registerUser).Methods("GET")
 	r.HandleFunc("/create-channel", createChannel).Methods("GET")
+	r.HandleFunc("/join-channel", joinChannel).Methods("GET")
+	r.HandleFunc("/install-chaincodes", installChaincodes).Methods("GET")
+	r.HandleFunc("/get-balance", getBalance).Methods("GET")
 	r.HandleFunc("/hello", handler).Methods("GET")
 	return r
 }
@@ -125,6 +128,140 @@ func createChannel(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func joinChannel(w http.ResponseWriter, r *http.Request) {
+	
+	fmt.Println("Joining Channel")
+	
+	jsonStr := []byte(`{"peers": ["peer0.org1.example.com","peer1.org1.example.com"]}`)
+		
+	client := &http.Client{
+		//CheckRedirect: redirectPolicyFunc,
+	}
+	
+	file, err := os.Open("token.txt")
+	defer file.Close()
+	b, _ := ioutil.ReadAll(file)
+	authToken := "Bearer " + string(b)
+
+	fmt.Println(authToken)
+	
+	req, err := http.NewRequest("POST", "http://localhost:4000/channels/mychannel/peers", bytes.NewReader(jsonStr))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("authorization", authToken)
+	response, err := client.Do(req)
+	
+	
+	if err != nil {
+		fmt.Printf("The Http request failed with error %s\n", err)
+	} else {
+		data, _ := ioutil.ReadAll(response.Body)
+
+		fmt.Fprintf(w, string(data))
+	}
+}
+
+func installChaincodes(w http.ResponseWriter, r *http.Request) {
+	
+	fmt.Println("Joining Channel")
+	
+	jsonStr := []byte(`{"peers": ["peer0.org1.example.com","peer1.org1.example.com"],
+						"chaincodeName":"mycc",
+						"chaincodePath":"github.com/example_cc/go",
+						"chaincodeType": "golang",
+						"chaincodeVersion":"v0"}`)
+		
+	client := &http.Client{
+		//CheckRedirect: redirectPolicyFunc,
+	}
+	
+	file, err := os.Open("token.txt")
+	defer file.Close()
+	b, _ := ioutil.ReadAll(file)
+	authToken := "Bearer " + string(b)
+
+	fmt.Println(authToken)
+	
+	req, err := http.NewRequest("POST", "http://localhost:4000/chaincodes", bytes.NewReader(jsonStr))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("authorization", authToken)
+	response, err := client.Do(req)
+	
+	
+	if err != nil {
+		fmt.Printf("The Http request failed with error %s\n", err)
+	} else {
+		data, _ := ioutil.ReadAll(response.Body)
+
+		fmt.Fprintf(w, string(data))
+	}
+}
+
+
+func instantiateChaincodes(w http.ResponseWriter, r *http.Request) {
+	
+	fmt.Println("Joining Channel")
+	
+	jsonStr := []byte(`{"chaincodeName":"mycc",
+						"chaincodePath":"github.com/example_cc/go",
+						"chaincodeType": "golang",
+						"args":["a","100","b","200"]}`)
+		
+	client := &http.Client{
+		//CheckRedirect: redirectPolicyFunc,
+	}
+	
+	file, err := os.Open("token.txt")
+	defer file.Close()
+	b, _ := ioutil.ReadAll(file)
+	authToken := "Bearer " + string(b)
+
+	fmt.Println(authToken)
+	
+	req, err := http.NewRequest("POST", "http://localhost:4000/channels/mychannel/chaincodes/mycc", bytes.NewReader(jsonStr))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("authorization", authToken)
+	response, err := client.Do(req)
+	
+	
+	if err != nil {
+		fmt.Printf("The Http request failed with error %s\n", err)
+	} else {
+		data, _ := ioutil.ReadAll(response.Body)
+
+		fmt.Fprintf(w, string(data))
+	}
+}
+
+
+func getBalance(w http.ResponseWriter, r *http.Request) {
+	
+	fmt.Println("fetching balance")
+		
+	client := &http.Client{
+		//CheckRedirect: redirectPolicyFunc,
+	}
+	
+	file, err := os.Open("token.txt")
+	defer file.Close()
+	b, _ := ioutil.ReadAll(file)
+	authToken := "Bearer " + string(b)
+
+	fmt.Println(authToken)
+	
+	req, err := http.NewRequest("GET", "http://localhost:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org1.example.com&fcn=query&args=%5B%22a%22%5D")
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("authorization", authToken)
+	response, err := client.Do(req)
+	
+	
+	if err != nil {
+		fmt.Printf("The Http request failed with error %s\n", err)
+	} else {
+		data, _ := ioutil.ReadAll(response.Body)
+
+		fmt.Fprintf(w, string(data))
+	}
+}
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	
